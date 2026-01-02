@@ -1,46 +1,41 @@
 #pragma once
+
 #include "esphome.h"
 #include "esphome/components/uart/uart.h"
-#include "esphome/components/sensor/sensor.h"
 
 namespace jsn_sensor {
 
-class JSNSensor : public esphome::Component {
+class JSNSensor : public PollingComponent {
  public:
-  JSNSensor(esphome::uart::UARTDevice *parent, esphome::sensor::Sensor *sensor)
-      : uart_(parent), sensor_(sensor) {}
+  JSNSensor(esphome::uart::UARTDevice *parent) : PollingComponent(500), uart_(parent) {}
 
   void setup() override {
+    ESP_LOGD("jsn_sensor", "JSN Sensor setup");
     buffer_pos_ = 0;
   }
 
-  void loop() override {
-    uint8_t c;
-    while (uart_->read_byte(&c)) {  // 讀取 UART
-      buffer_[buffer_pos_++] = c;
+  void update() override {
+    uint8_t data;
+    while (uart_->read_byte(&data)) {
+      // 簡單解析 UART 回傳的 2 bytes 距離數據
+      buffer_[buffer_pos_++] = data;
       if (buffer_pos_ >= sizeof(buffer_)) buffer_pos_ = 0;
-    }
 
-    float d = parse_distance();
-    if (!isnan(d)) {
-      ESP_LOGD("jsn_sensor", "Distance: %.1f cm", d);
-      sensor_->publish_state(d);
+      if (buffer_pos_ == 2) {
+        float d = float((buffer_[0] << 8) | buffer_[1]) / 10.0;
+        ESP_LOGD("jsn_sensor", "Distance: %.1f cm", d);
+        if (distance_sensor_) distance_sensor_->publish_state(d);
+      }
     }
   }
+
+  void set_sensor(esphome::sensor::Sensor *sensor) { distance_sensor_ = sensor; }
 
  protected:
   esphome::uart::UARTDevice *uart_;
-  esphome::sensor::Sensor *sensor_;
-  uint8_t buffer_[32];
-  int buffer_pos_;
-
-  float parse_distance() {
-    if (buffer_pos_ >= 2) {
-      int dist_mm = (buffer_[0] << 8) | buffer_[1];
-      return dist_mm / 10.0f;  // cm
-    }
-    return NAN;
-  }
+  esphome::sensor::Sensor *distance_sensor_{nullptr};
+  uint8_t buffer_[2];
+  uint8_t buffer_pos_;
 };
 
 }  // namespace jsn_sensor
