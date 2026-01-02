@@ -5,36 +5,36 @@
 
 namespace jsn_sensor {
 
-class JSNSensor : public PollingComponent {
+class JSNSensor : public PollingComponent, public Sensor {
  public:
-  JSNSensor(esphome::uart::UARTDevice *parent) : PollingComponent(500), uart_(parent) {}
+  // 使用 UARTComponent 而不是 UARTDevice
+  JSNSensor(esphome::uart::UARTComponent *parent) 
+    : PollingComponent(500), uart_(parent) {}
 
   void setup() override {
-    ESP_LOGD("jsn_sensor", "JSN Sensor setup");
     buffer_pos_ = 0;
   }
 
   void update() override {
-    uint8_t data;
-    while (uart_->read_byte(&data)) {
-      // 簡單解析 UART 回傳的 2 bytes 距離數據
-      buffer_[buffer_pos_++] = data;
-      if (buffer_pos_ >= sizeof(buffer_)) buffer_pos_ = 0;
+    while (uart_->available()) {
+      uint8_t c = 0;
+      if (!uart_->read_byte(&c)) break;  // 使用 read_byte(uint8_t*)
+      buffer_[buffer_pos_] = c;
+      buffer_pos_++;
 
-      if (buffer_pos_ == 2) {
-        float d = float((buffer_[0] << 8) | buffer_[1]) / 10.0;
-        ESP_LOGD("jsn_sensor", "Distance: %.1f cm", d);
-        if (distance_sensor_) distance_sensor_->publish_state(d);
+      if (buffer_pos_ >= 4) {  // JSN-SR04T 每筆資料4 bytes
+        // 計算距離 (mm)
+        uint16_t val = (uint16_t(buffer_[2]) << 8) | buffer_[3];
+        float d = val / 10.0;  // cm
+        publish_state(d);
+        buffer_pos_ = 0;
       }
     }
   }
 
-  void set_sensor(esphome::sensor::Sensor *sensor) { distance_sensor_ = sensor; }
-
  protected:
-  esphome::uart::UARTDevice *uart_;
-  esphome::sensor::Sensor *distance_sensor_{nullptr};
-  uint8_t buffer_[2];
+  esphome::uart::UARTComponent *uart_;
+  uint8_t buffer_[4];
   uint8_t buffer_pos_;
 };
 
