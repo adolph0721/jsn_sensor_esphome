@@ -1,46 +1,36 @@
 #pragma once
+#include "esphome.h"
 
-#include "esphome/components/sensor/sensor.h"
-#include "esphome/components/uart/uart.h"
-#include "esphome/core/component.h"
+using namespace esphome;
 
-namespace esphome {
-namespace jsn_sensor {
-
-class JSNSensor : public Component {
+class JSNSensor : public Sensor, public Component, public UARTDevice {
  public:
-  explicit JSNSensor(uart::UARTComponent *parent, sensor::Sensor *sensor)
-      : uart_(parent), sensor_(sensor) {}
-
-  void setup() override {
-    buffer_pos_ = 0;
-  }
+  JSNSensor(UARTComponent *parent) : UARTDevice(parent) {}
 
   void loop() override {
-    uint8_t c;
-    while (uart_->read_byte(&c)) {
-      if (buffer_pos_ == 0 && c != 0xFF) continue; // header
-      if (buffer_pos_ == 0) {
-        buffer_[0] = c;
-        buffer_pos_ = 1;
-      } else if (buffer_pos_ > 0) {
-        buffer_[buffer_pos_++] = c;
+    while (available() >= 4) {
+      uint8_t data[4];
+      read_array(data, 4);
+
+      // JSN-SR04T frame: FF H L SUM
+      if (data[0] != 0xFF) {
+        ESP_LOGD("jsn", "Frame error: %02X", data[0]);
+        continue;
       }
 
-      if (buffer_pos_ == 4) { // 假設 4 bytes JSN-SR04T
-        int distance = (buffer_[2] << 8) | buffer_[3];
-        sensor_->publish_state(distance / 10.0f); // mm -> cm
-        buffer_pos_ = 0;
+      uint8_t checksum = data[0] + data[1] + data[2];
+      if (checksum != data[3]) {
+        ESP_LOGD("jsn", "Checksum error");
+        continue;
       }
+
+      int distance_mm = (data[1] << 8) | data[2];
+      float distance_cm = distance_mm / 10.0f;
+
+      ESP_LOGD("jsn", "Distance: %.1f cm", distance_cm);
+
+      // ⭐ 關鍵：真的送出數值
+      publish_state(distance_cm);
     }
   }
-
- protected:
-  uart::UARTComponent *uart_;
-  sensor::Sensor *sensor_;
-  uint8_t buffer_[4];
-  uint8_t buffer_pos_;
 };
-
-}  // namespace jsn_sensor
-}  // namespace esphome
