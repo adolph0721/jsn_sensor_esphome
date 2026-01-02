@@ -1,6 +1,6 @@
 #include "jsn_sensor.h"
+#include "esphome/core/log.h"
 
 namespace jsn_sensor {
-
-// 空的 cpp，所有程式在 header
-}
+// C++ 實作在 header 已經完成
+}  // namespace jsn_sensor

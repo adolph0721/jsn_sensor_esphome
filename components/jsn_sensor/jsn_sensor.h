@@ -1,39 +1,38 @@
 #pragma once
-
 #include "esphome.h"
 #include "esphome/components/uart/uart.h"
 
 namespace jsn_sensor {
 
-class JSNSensor : public PollingComponent, public Sensor {
+class JSNSensor : public PollingComponent, public sensor::Sensor {
  public:
-  JSNSensor(esphome::uart::UARTComponent *parent) 
-    : PollingComponent(500), uart_(parent) {}
+  JSNSensor(esphome::uart::UARTComponent *parent) : PollingComponent(500), uart_(parent) {}
 
   void setup() override {
+    ESP_LOGD("jsn_sensor", "JSN Sensor setup");
     buffer_pos_ = 0;
   }
 
   void update() override {
-    while (uart_->available()) {
-      uint8_t c = 0;
-      if (!uart_->read_byte(&c)) break;
-      buffer_[buffer_pos_] = c;
-      buffer_pos_++;
-
-      if (buffer_pos_ >= 4) {
-        uint16_t val = (uint16_t(buffer_[2]) << 8) | buffer_[3];
-        float d = val / 10.0;
+    uint8_t byte;
+    while (uart_->read_byte(&byte)) {
+      if (byte == '\n') {
+        // 將 buffer 轉成距離
+        float d = atof(buffer_) / 10.0;
+        ESP_LOGD("jsn_sensor", "Water distance: %.1f cm", d);
         publish_state(d);
         buffer_pos_ = 0;
+      } else if (buffer_pos_ < sizeof(buffer_) - 1) {
+        buffer_[buffer_pos_++] = byte;
+        buffer_[buffer_pos_] = 0;
       }
     }
   }
 
  protected:
   esphome::uart::UARTComponent *uart_;
-  uint8_t buffer_[4];
-  uint8_t buffer_pos_;
+  char buffer_[32];
+  size_t buffer_pos_;
 };
 
 }  // namespace jsn_sensor
