@@ -4,9 +4,10 @@
 
 namespace jsn_sensor {
 
-class JSNSensor : public PollingComponent, public sensor::Sensor {
+class JSNSensor : public PollingComponent {
  public:
-  JSNSensor(esphome::uart::UARTComponent *parent) : PollingComponent(500), uart_(parent) {}
+  JSNSensor(esphome::uart::UARTComponent *parent) 
+      : PollingComponent(500), uart_(parent) {}
 
   void setup() override {
     ESP_LOGD("jsn_sensor", "JSN Sensor setup");
@@ -17,10 +18,8 @@ class JSNSensor : public PollingComponent, public sensor::Sensor {
     uint8_t byte;
     while (uart_->read_byte(&byte)) {
       if (byte == '\n') {
-        // 將 buffer 轉成距離
         float d = atof(buffer_) / 10.0;
         ESP_LOGD("jsn_sensor", "Water distance: %.1f cm", d);
-        publish_state(d);
         buffer_pos_ = 0;
       } else if (buffer_pos_ < sizeof(buffer_) - 1) {
         buffer_[buffer_pos_++] = byte;
