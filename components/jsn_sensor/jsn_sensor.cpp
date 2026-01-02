@@ -2,6 +2,5 @@
 
 namespace jsn_sensor {
 
-// 空 cpp，所有程式碼已在 header 寫好
-
-}  // namespace jsn_sensor
+// 全部邏輯都在 header，cpp 可以空著或留 logging 相關
+}
