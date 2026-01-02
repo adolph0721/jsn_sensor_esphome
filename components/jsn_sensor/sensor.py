@@ -5,7 +5,7 @@ from esphome.components import sensor, uart
 jsn_sensor_ns = cg.esphome_ns.namespace("jsn_sensor")
 JSNSensor = jsn_sensor_ns.class_("JSNSensor", cg.PollingComponent, sensor.Sensor)
 
-# 定義 schema，新增新版 sensor 必須欄位
+# 定義 schema，加入新版必須欄位
 CONFIG_SCHEMA = cv.Schema({
     cv.Required("uart_id"): cv.use_id(uart.UARTComponent),
     cv.Required("name"): cv.string,
@@ -14,12 +14,15 @@ CONFIG_SCHEMA = cv.Schema({
     cv.Optional("icon"): cv.icon,
     cv.Optional("accuracy_decimals"): cv.int_,
     cv.Optional("device_class"): cv.string,
+    cv.Optional("state_class"): cv.string,
+    cv.Optional("force_update", default=False): cv.boolean,
     cv.Optional("disabled_by_default", default=False): cv.boolean,
-}).extend({})  # 不再 extend SENSOR_SCHEMA
+}).extend({})
 
 async def to_code(config):
     uart_ = await cg.get_variable(config["uart_id"])
-    # 使用 id 或 name 產生 Pvariable
+
+    # 生成 Pvariable
     if "id" in config:
         var = cg.new_Pvariable(config["id"], uart_)
     else:
@@ -34,5 +37,7 @@ async def to_code(config):
         var.set_icon(config["icon"])
     if "device_class" in config:
         var.set_device_class(config["device_class"])
+    if "state_class" in config:
+        var.set_state_class(config["state_class"])
 
     await sensor.register_sensor(var, config)
