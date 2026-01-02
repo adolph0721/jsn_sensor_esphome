@@ -1,11 +1,7 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.components import uart, sensor
-from esphome.const import (
-    CONF_ID,
-    UNIT_CENTIMETER,
-    ICON_ARROW_EXPAND_VERTICAL,
-)
+from esphome.const import CONF_ID, UNIT_CENTIMETER
 
 DEPENDENCIES = ["uart"]
 
@@ -14,7 +10,6 @@ JSNSensor = jsn_ns.class_("JSNSensor", sensor.Sensor, cg.Component)
 
 CONFIG_SCHEMA = sensor.sensor_schema(
     unit_of_measurement=UNIT_CENTIMETER,
-    icon=ICON_ARROW_EXPAND_VERTICAL,
     accuracy_decimals=1,
 ).extend(
     {
