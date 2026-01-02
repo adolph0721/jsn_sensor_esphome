@@ -1,6 +1,5 @@
 #include "jsn_sensor.h"
-#include "esphome/core/log.h"
 
 namespace jsn_sensor {
-// 所有實作已在 header 完成
+// 目前所有邏輯都在 header 已 inline，cpp 可留空或放其他函數
 }  // namespace jsn_sensor
