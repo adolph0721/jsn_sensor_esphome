@@ -7,7 +7,6 @@ namespace jsn_sensor {
 
 class JSNSensor : public PollingComponent, public Sensor {
  public:
-  // 使用 UARTComponent 而不是 UARTDevice
   JSNSensor(esphome::uart::UARTComponent *parent) 
     : PollingComponent(500), uart_(parent) {}
 
@@ -18,14 +17,13 @@ class JSNSensor : public PollingComponent, public Sensor {
   void update() override {
     while (uart_->available()) {
       uint8_t c = 0;
-      if (!uart_->read_byte(&c)) break;  // 使用 read_byte(uint8_t*)
+      if (!uart_->read_byte(&c)) break;
       buffer_[buffer_pos_] = c;
       buffer_pos_++;
 
-      if (buffer_pos_ >= 4) {  // JSN-SR04T 每筆資料4 bytes
-        // 計算距離 (mm)
+      if (buffer_pos_ >= 4) {
         uint16_t val = (uint16_t(buffer_[2]) << 8) | buffer_[3];
-        float d = val / 10.0;  // cm
+        float d = val / 10.0;
         publish_state(d);
         buffer_pos_ = 0;
       }

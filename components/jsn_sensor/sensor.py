@@ -3,6 +3,7 @@ import esphome.config_validation as cv
 from esphome.components import sensor, uart
 from esphome.const import CONF_ID, CONF_NAME, CONF_UNIT_OF_MEASUREMENT, CONF_ACCURACY_DECIMALS
 
+# C++ class
 JSNSensor = cg.global_ns.namespace('jsn_sensor').JSNSensor
 
 PLATFORM_SCHEMA = cv.Schema({
