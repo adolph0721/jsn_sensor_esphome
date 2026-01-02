@@ -5,7 +5,6 @@ from esphome.components import sensor, uart
 jsn_sensor_ns = cg.esphome_ns.namespace("jsn_sensor")
 JSNSensor = jsn_sensor_ns.class_("JSNSensor", cg.PollingComponent, sensor.Sensor)
 
-# 定義 schema，加入新版必須欄位
 CONFIG_SCHEMA = cv.Schema({
     cv.Required("uart_id"): cv.use_id(uart.UARTComponent),
     cv.Required("name"): cv.string,
@@ -15,20 +14,18 @@ CONFIG_SCHEMA = cv.Schema({
     cv.Optional("accuracy_decimals"): cv.int_,
     cv.Optional("device_class"): cv.string,
     cv.Optional("state_class"): cv.string,
-    cv.Optional("force_update", default=False): cv.boolean,
+    cv.Optional("force_update", default=True): cv.boolean,
     cv.Optional("disabled_by_default", default=False): cv.boolean,
 }).extend({})
 
 async def to_code(config):
     uart_ = await cg.get_variable(config["uart_id"])
 
-    # 生成 Pvariable
     if "id" in config:
         var = cg.new_Pvariable(config["id"], uart_)
     else:
         var = cg.new_Pvariable(config["name"], uart_)
 
-    # 設定 sensor 屬性
     if "unit_of_measurement" in config:
         var.set_unit_of_measurement(config["unit_of_measurement"])
     if "accuracy_decimals" in config:

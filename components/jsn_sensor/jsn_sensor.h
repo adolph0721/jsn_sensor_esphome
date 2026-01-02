@@ -5,41 +5,44 @@
 
 namespace jsn_sensor {
 
-using namespace esphome;
-using namespace esphome::sensor;
-using namespace esphome::uart;
-
-class JSNSensor : public PollingComponent, public Sensor {
+class JSNSensor : public sensor::Sensor, public PollingComponent {
  public:
-  explicit JSNSensor(UARTComponent *parent_uart) 
-      : PollingComponent(500), uart(parent_uart) {}
+  JSNSensor(uart::UARTDevice *parent) : PollingComponent(500), uart_(parent) {}
 
   void setup() override {
-    buffer_pos = 0;
+    buffer_pos_ = 0;
   }
 
   void update() override {
-    if (!uart) return;
+    // 讀取 UART bytes
+    while (uart_->available()) {
+      uint8_t c = uart_->read_byte();
+      buffer_[buffer_pos_++] = c;
+      if (buffer_pos_ >= sizeof(buffer_)) buffer_pos_ = 0;
+    }
 
-    while (uart->available()) {
-      uint8_t c = uart->read();
-      buffer[buffer_pos++] = c;
-
-      if (buffer_pos >= 4) {
-        // JSN-SR04T UART 回傳兩個 bytes 距離 (mm)
-        uint16_t dist = (buffer[0] << 8) | buffer[1];
-        float d = dist / 10.0f;  // 轉成 cm
-        ESP_LOGD("jsn_sensor", "Distance raw=%u cm=%.1f", dist, d);
-        this->publish_state(d);
-        buffer_pos = 0;
-      }
+    // 解析距離
+    float d = parse_distance();
+    if (!isnan(d)) {
+      ESP_LOGD("jsn_sensor", "Distance: %.1f cm", d);
+      publish_state(d);
     }
   }
 
  protected:
-  uart::UARTComponent *uart;
-  uint8_t buffer[4]{0};
-  uint8_t buffer_pos{0};
+  uart::UARTDevice *uart_;
+  uint8_t buffer_[32];
+  int buffer_pos_;
+
+  float parse_distance() {
+    // 這裡要放你的 JSN-SR04T UART 資料解析邏輯
+    // 範例: 假設 buffer[0] = 高位，buffer[1] = 低位
+    if (buffer_pos_ >= 2) {
+      float dist = buffer_[0] << 8 | buffer_[1];
+      return dist / 10.0;  // 如果 sensor 傳回 mm，轉成 cm
+    }
+    return NAN;
+  }
 };
 
 }  // namespace jsn_sensor
