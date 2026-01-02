@@ -12,18 +12,15 @@ DEPENDENCIES = ["uart"]
 jsn_ns = cg.esphome_ns.namespace("jsn_sensor")
 JSNSensor = jsn_ns.class_("JSNSensor", sensor.Sensor, cg.Component)
 
-CONFIG_SCHEMA = (
-    sensor.sensor_schema(
-        unit_of_measurement=UNIT_CENTIMETER,
-        icon=ICON_ARROW_EXPAND_VERTICAL,
-        accuracy_decimals=1,
-    )
-    .extend(
-        {
-            cv.GenerateID(): cv.declare_id(JSNSensor),
-            cv.Required("uart_id"): cv.use_id(uart.UARTComponent),
-        }
-    )
+CONFIG_SCHEMA = sensor.sensor_schema(
+    unit_of_measurement=UNIT_CENTIMETER,
+    icon=ICON_ARROW_EXPAND_VERTICAL,
+    accuracy_decimals=1,
+).extend(
+    {
+        cv.GenerateID(): cv.declare_id(JSNSensor),
+        cv.Required("uart_id"): cv.use_id(uart.UARTComponent),
+    }
 )
 
 async def to_code(config):
