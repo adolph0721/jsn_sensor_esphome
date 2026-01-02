@@ -1,12 +1,13 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
-from esphome.components import sensor, uart
+from esphome.components import uart
 from esphome.const import CONF_ID, CONF_NAME, CONF_UNIT_OF_MEASUREMENT, CONF_ACCURACY_DECIMALS
 
+# 建立 namespace
 jsn_ns = cg.esphome_ns.namespace("jsn_sensor")
 JSNSensor = jsn_ns.class_("JSNSensor", cg.Component)
 
-# 2025版正確寫法：不用 extend SENSOR_SCHEMA
+# 2025 版本正確 CONFIG_SCHEMA
 CONFIG_SCHEMA = cv.Schema({
     cv.Required(CONF_ID): cv.declare_id(JSNSensor),
     cv.Required("uart_id"): cv.use_id(uart.UARTComponent),
