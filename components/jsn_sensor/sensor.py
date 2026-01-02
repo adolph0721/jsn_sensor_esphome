@@ -4,14 +4,12 @@ from esphome.components import sensor, uart
 
 CONF_UART_ID = "uart_id"
 
-# 建立 C++ namespace 與 class
-jsn_sensor_ns = cg.esphome_ns.namespace("jsn_sensor")
-JSNSensor = jsn_sensor_ns.class_(
-    "JSNSensor", cg.PollingComponent, sensor.Sensor
-)
+# C++ class 與 namespace
+jsn_ns = cg.esphome_ns.namespace("jsn_sensor")
+JSNSensor = jsn_ns.class_("JSNSensor", cg.PollingComponent, sensor.Sensor)
 
-# 用最新的 cv.Schema 定義
-PLATFORM_SCHEMA = cv.Schema({
+# 新版 ESPHome schema
+CONFIG_SCHEMA = cv.Schema({
     cv.Required(CONF_UART_ID): cv.use_id(uart.UARTComponent),
     cv.Required(sensor.CONF_ID): cv.declare_id(JSNSensor),
 })

@@ -7,7 +7,7 @@ namespace jsn_sensor {
 
 class JSNSensor : public PollingComponent, public esphome::sensor::Sensor {
  public:
-  JSNSensor(esphome::uart::UARTDevice *parent) : PollingComponent(500), uart_(parent) {}
+  JSNSensor(esphome::uart::UARTComponent *parent) : PollingComponent(500), uart_(parent) {}
 
   void setup() override { buffer_pos_ = 0; }
 
@@ -26,7 +26,7 @@ class JSNSensor : public PollingComponent, public esphome::sensor::Sensor {
   }
 
  protected:
-  esphome::uart::UARTDevice *uart_;
+  esphome::uart::UARTComponent *uart_;
   uint8_t buffer_[4];
   uint8_t buffer_pos_;
 };
