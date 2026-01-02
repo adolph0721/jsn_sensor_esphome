@@ -1,6 +1,6 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
-from esphome.components import uart
+from esphome.components import uart, sensor
 
 CONF_UART_ID = "uart_id"
 
@@ -10,14 +10,10 @@ JSNSensor = jsn_ns.class_("JSNSensor", cg.PollingComponent)
 CONFIG_SCHEMA = cv.Schema({
     cv.Required("id"): cv.declare_id(JSNSensor),
     cv.Required(CONF_UART_ID): cv.use_id(uart.UARTComponent),
-    cv.Optional("name"): cv.string,
-    cv.Optional("unit_of_measurement"): cv.string,
-    cv.Optional("accuracy_decimals"): cv.positive_int,
+    cv.Required("sensor"): cv.use_id(sensor.Sensor),
 })
 
 async def to_code(config):
     uart_var = await cg.get_variable(config[CONF_UART_ID])
-    var = cg.new_Pvariable(config["id"], uart_var)
-    cg.add(var.set_name(config.get("name", "")))
-    cg.add(var.set_unit_of_measurement(config.get("unit_of_measurement", "")))
-    cg.add(var.set_accuracy_decimals(config.get("accuracy_decimals", 1)))
+    sensor_var = await cg.get_variable(config["sensor"])
+    var = cg.new_Pvariable(config["id"], uart_var, sensor_var)
