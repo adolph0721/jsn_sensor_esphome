@@ -5,9 +5,9 @@
 
 namespace jsn_sensor {
 
-class JSNSensor : public PollingComponent, public sensor::Sensor {
+class JSNSensor : public PollingComponent {
  public:
-  JSNSensor(uart::UARTDevice *parent) : PollingComponent(500), uart_(parent) {}
+  explicit JSNSensor(uart::UARTDevice *parent) : PollingComponent(500), uart_(parent) {}
 
   void setup() override { buffer_pos_ = 0; }
 
@@ -28,10 +28,17 @@ class JSNSensor : public PollingComponent, public sensor::Sensor {
     }
   }
 
+  void set_name(std::string name) { this->name_ = name; }
+  void set_unit_of_measurement(std::string unit) { this->unit_ = unit; }
+  void set_accuracy_decimals(int decimals) { this->decimals_ = decimals; }
+
  protected:
   uart::UARTDevice *uart_;
   uint8_t buffer_[9];
   uint8_t buffer_pos_;
+  std::string name_;
+  std::string unit_;
+  int decimals_;
 };
 
 }  // namespace jsn_sensor

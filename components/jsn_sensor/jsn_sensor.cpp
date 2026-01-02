@@ -1,8 +1,6 @@
 #include "jsn_sensor.h"
-#include "esphome/core/log.h"
 
 namespace jsn_sensor {
 
-static const char *TAG = "jsn_sensor";
-
+// 空實作檔，可以留空
 }  // namespace jsn_sensor
